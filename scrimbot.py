@@ -1,16 +1,16 @@
 import discord
 import asyncio
-import aiohttp
 import random
-from datetime import timedelta, datetime
-from config import settings, emojis, color_pick
-
-scrim_channel = 594502407170424832
+import coc
+from loguru import logger
+from config import settings, emojis
 
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
 emoji_1 = ":airplane:"
 emoji_2 = emojis['other']['tank']
+
+coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="LIVE")
 
 
 class ScrimBot(discord.Client):
@@ -27,40 +27,7 @@ class ScrimBot(discord.Client):
 
     async def my_background_task(self):
         await self.wait_until_ready()
-        channel = self.get_channel(scrim_channel)
-        
-        def build_attacks(d):
-            attack_data = []
-            for member in d['clan']['members']:
-                try:
-                    attack_data.append({"clan": 1, "order": member['attacks'][0]['order'], "attackerTag": member['attacks'][0]['attackerTag'],"defenderTag":member['attacks'][0]['defenderTag'],"stars": member['attacks'][0]['stars'],"percent":member['attacks'][0]['destructionPercentage']})
-                except:
-                    pass
-                try:
-                    attack_data.append({"clan": 1,"order": member['attacks'][1]['order'],"attackerTag":member['attacks'][1]['attackerTag'],"defenderTag":member['attacks'][1]['defenderTag'],"stars": member['attacks'][1]['stars'],"percent":member['attacks'][1]['destructionPercentage']})
-                except:
-                    pass
-            for member in d['opponent']['members']:
-                try:
-                    attack_data.append({"clan": 2,"order": member['attacks'][0]['order'],"attackerTag":member['attacks'][0]['attackerTag'],"defenderTag":member['attacks'][0]['defenderTag'],"stars": member['attacks'][0]['stars'],"percent":member['attacks'][0]['destructionPercentage']})
-                except:
-                    pass
-                try:
-                    attack_data.append({"clan": 2,"order": member['attacks'][1]['order'],"attackerTag":member['attacks'][1]['attackerTag'],"defenderTag":member['attacks'][1]['defenderTag'],"stars": member['attacks'][1]['stars'],"percent":member['attacks'][1]['destructionPercentage']})
-                except:
-                    pass
-            return sorted(attack_data, key=lambda k: k['order'])
-
-        def find_player(tag):
-            player = []
-            for member in data['clan']['members']:
-                if member['tag'] == tag:
-                    player.append({"name": member['name'], "th": member['townhallLevel'], "map": member['mapPosition']})
-                    return player
-            for member in data['opponent']['members']:
-                if member['tag'] == tag:
-                    player.append({"name": member['name'], "th": member['townhallLevel'], "map": member['mapPosition']})
-                    return player
+        channel = self.get_channel(594502407170424832)
 
         def star_phrases(stars):
             if stars == 3:
@@ -107,96 +74,83 @@ class ScrimBot(discord.Client):
                         "Uh oh, I think we had a disco!", 
                         "It is OK.  Take a deep breath.  We didn't really need those stars anyway."]
 
-        headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + settings['supercell']['apiKey']}
-        url = f"https://api.clashofclans.com/v1/clans/%23{clan_1}/currentwar"
-
         while not self.is_closed():
             with open('scrim.txt', 'r') as f:
                 last_attack = int(float(f.readline()))
             new_last_attack = last_attack
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers) as r:
-                    if r.status == 200:
-                        data = await r.json()
-                    else:
-                        print("API pull failed.")
-                        print(r.status)
-                        print(r.text)
-            timeAdjust = timedelta(hours=1)
-            if data['state'] == 'preparation':
-                time_to_start = datetime.strptime(data['startTime'], '%Y%m%dT%H%M%S.%fZ') - datetime.now() + timeAdjust
-                content = f"**{data['clan']['name']} vs {data['opponent']['name']}**"
-                content = f"\n{time_to_start} until war begins.\nCome back and watch the progress!"
-            if data['state'] in ['inWar', 'warEnded']:
-                print("in war")
-                attacks = build_attacks(data)
-                time_to_end = datetime.strptime(data['endTime'], '%Y%m%dT%H%M%S.%fZ') - datetime.now() + timeAdjust
-                for attack in attacks:
-                    if attack['order'] > last_attack:
-                        attacker = find_player(attack['attackerTag'])
-                        defender = find_player(attack['defenderTag'])
-                        attacker_name = f"{str(attacker[0]['map'])}. {attacker[0]['name']}"
-                        defender_name = f"{str(defender[0]['map'])}. {defender[0]['name']}"
-                        if attack['clan'] == 1:
-                            attacker_name = f"{emoji_1} {attacker_name}"
-                            defender_name = f"{emoji_2} {defender_name}"
-                        else:
-                            attacker_name = f"{emoji_2} {attacker_name}"
-                            defender_name = f"{emoji_1} {defender_name}"
-                        townhalls = f"({str(attacker[0]['th'])}v{str(defender[0]['th'])})"
-                        line_1 = f"{attacker_name} just attacked {defender_name}"
-                        stars = f"{emojis['stars']['new']*attack['stars']}{emojis['stars']['empty']*(3-attack['stars'])}"
-                        line_2 = f"{stars} ({str(attack['percent'])}%) {townhalls}"
-                        if attack['clan'] == 1:
-                            line_3 = f"{random.choice(star_phrases(attack['stars']))}"
-                        else:
-                            line_3 = f"{random.choice(star_phrases(attack['stars']))}"
-                        content = f"{line_1}\n{line_2}\n{line_3}\n------------"
-                        await channel.send(content)
-                        new_last_attack = attack['order']
-                        print(new_last_attack)
-                # ------ FIX CLAN NAMES ------ #
-                data['clan']['name'] = "Air"
-                data['opponent']['name'] = "Ground"
-                if new_last_attack > last_attack:
-                    if len(data['clan']['name']) > len(data['opponent']['name']):
-                        name_width = len(data['clan']['name']) + 3
-                    else:
-                        name_width = len(data['opponent']['name']) + 3
-                    if data['clan']['stars'] < data['opponent']['stars']:
-                        color = color_pick(181, 0, 0)
-                    else:
-                        if data['clan']['stars'] > data['opponent']['stars']:
-                            color = color_pick(51, 153, 255)
-                        else:
-                            if data['clan']['destructionPercentage'] < data['opponent']['destructionPercentage']:
-                                color = color_pick(181, 0, 0)
+            war = await coc_client.get_current_war(f"#{clan_1}")
+            if war.state == 'preparation':
+                hours = war.start_time.seconds_until // 3600
+                minutes = (war.start_time.seconds_until % 3600) // 60
+                content = f"{emoji_1} **Air vs Ground** {emoji_2}"
+                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the Air vs. Ground war begins.\n"
+                            f"Come back and watch the progress!")
+                await channel.send(content)
+                await asyncio.sleep(war.start_time.seconds_until)
+            if war.state in ['inWar', 'warEnded']:
+                hours = war.end_time.seconds_until // 3600
+                minutes = (war.end_time.seconds_until % 3600) // 60
+                print(f"{hours:.0f}:{minutes:.0f} left in war")
+                try:
+                    # async for attack in war._attacks:
+                    for attack in war.attacks:
+                        print("Processing war attacks...")
+                        if attack.order > last_attack:
+                            print(f"Processing attack #{attack.order}")
+                            attacker_name = f"{str(attack.attacker.map_position)}. {attack.attacker.name}"
+                            defender_name = f"{str(attack.defender.map_position)}. {attack.defender.name}"
+                            if attack.defender.is_opponent:
+                                attacker_name = f"{emoji_1} {attacker_name}"
+                                defender_name = f"{emoji_2} {defender_name}"
                             else:
-                                color = color_pick(51, 153, 255)
+                                attacker_name = f"{emoji_2} {attacker_name}"
+                                defender_name = f"{emoji_1} {defender_name}"
+                            townhalls = f"({str(attack.attacker.town_hall)}v{str(attack.defender.town_hall)})"
+                            line_1 = f"{attacker_name} just attacked {defender_name}"
+                            stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
+                            line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
+                            if attack.defender.is_opponent:
+                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                            else:
+                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                            content = f"{line_1}\n{line_2}\n{line_3}\n------------"
+                            await channel.send(content)
+                            new_last_attack = attack.order
+                            print(new_last_attack)
+                except:
+                    logger.exception("attack loop")
+                # ------ FIX CLAN NAMES ------ #
+                clan_1_name = "Air"
+                clan_2_name = "Ground"
+                if new_last_attack > last_attack:
+                    if len(clan_1_name) > len(clan_2_name):
+                        name_width = len(clan_1_name) + 3
+                    else:
+                        name_width = len(clan_2_name) + 3
                     zws = " \u200b"
-                    clan_1_name = f"`{zws*(name_width-len(data['clan']['name'])-1)}{data['clan']['name']}{zws}`"
-                    clan_2_name = f"`\u200b {data['opponent']['name']}{zws*(name_width-len(data['opponent']['name'])-2)}`"
-                    clan_1_stars = f"{data['clan']['stars']}/{data['teamSize']*3}"
+                    clan_1_name = f"`{zws*(name_width-len(clan_1_name)-1)}{clan_1_name}{zws}`"
+                    clan_2_name = f"`\u200b {clan_2_name}{zws*(name_width-len(clan_2_name)-2)}`"
+                    clan_1_stars = f"{war.clan.stars}/{war.clan.max_stars}"
                     clan_1_stars = f"`{zws*(name_width-len(clan_1_stars)-1)}{clan_1_stars}{zws}`"
-                    clan_2_stars = f"{data['opponent']['stars']}/{data['teamSize']*3}"
+                    clan_2_stars = f"{war.opponent.stars}/{war.opponent.max_stars}"
                     clan_2_stars = f"`\u200b {clan_2_stars}{zws*(name_width-len(clan_2_stars)-2)}`"
-                    if data['clan']['destructionPercentage'] < 100:
+                    if war.clan.destruction < 100:
                         width = 5
                         precision = 4
-                        clan_1_per = f"{data['clan']['destructionPercentage']:{width}.{precision}}"
+                        clan_1_per = f"{war.clan.destruction:{width}.{precision}}"
                     else:
-                        clan_1_per = data['clan']['destructionPercentage']
+                        clan_1_per = war.clan.destruction
                     clan_1_per = f"`{zws*(name_width-len(clan_1_per)-2)}{clan_1_per}%{zws}`"
-                    if data['opponent']['destructionPercentage'] < 100:
+                    if war.opponent.desctrucion < 100:
                         width = 4
                         precision = 4
-                        clan_2_per = f"{data['opponent']['destructionPercentage']:{width}.{precision}}"
+                        clan_2_per = f"{war.opponent.desctrucion:{width}.{precision}}"
                     else:
-                        clan_2_per = data['opponent']['destructionPercentage']
+                        clan_2_per = war.opponent.desctrucion
                     clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
-                    clan_1_attacks = f"{data['clan']['attacks']}/{data['teamSize']*2}"
+                    clan_1_attacks = f"{war.clan.attacks_used}/{war.clan.attack_count}"
                     clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
-                    clan_2_attacks = f"{data['opponent']['attacks']}/{data['teamSize']*2}"
+                    clan_2_attacks = f"{war.opponent.attacks_used}/{war.opponent.attack_count}"
                     clan_2_attacks = f"`\u200b {clan_2_attacks}{zws*(name_width-len(clan_2_attacks)-2)}`"
                     content = f"{clan_1_name}{emojis['other']['gap']}{emojis['other']['rcs']}{emojis['other']['gap']}{clan_2_name}"
                     content += f"\n{clan_1_stars}{emojis['other']['gap']}{emojis['stars']['new']}{emojis['other']['gap']}{clan_2_stars}"
@@ -210,49 +164,5 @@ class ScrimBot(discord.Client):
                 await asyncio.sleep(600)
 
 
-def build_attacks(d):
-    attack_data = []
-    for member in d['clan']['members']:
-        try:
-            attack_data.append({"clan": 1,
-                                "order": member['attacks'][0]['order'],
-                                "attackerTag": member['attacks'][0]['attackerTag'],
-                                "defenderTag": member['attacks'][0]['defenderTag'],
-                                "stars": member['attacks'][0]['stars'],
-                                "percent": member['attacks'][0]['destructionPercentage']})
-        except:
-            pass
-        try:
-            attack_data.append({"clan": 1,
-                                "order": member['attacks'][1]['order'],
-                                "attackerTag": member['attacks'][1]['attackerTag'],
-                                "defenderTag": member['attacks'][1]['defenderTag'],
-                                "stars": member['attacks'][1]['stars'],
-                                "percent": member['attacks'][1]['destructionPercentage']})
-        except:
-            pass
-    for member in d['opponent']['members']:
-        try:
-            attack_data.append({"clan": 2,
-                                "order": member['attacks'][0]['order'],
-                                "attackerTag": member['attacks'][0]['attackerTag'],
-                                "defenderTag": member['attacks'][0]['defenderTag'],
-                                "stars": member['attacks'][0]['stars'],
-                                "percent": member['attacks'][0]['destructionPercentage']})
-        except:
-            pass
-        try:
-            attack_data.append({"clan": 2,
-                                "order": member['attacks'][1]['order'],
-                                "attackerTag": member['attacks'][1]['attackerTag'],
-                                "defenderTag": member['attacks'][1]['defenderTag'],
-                                "stars": member['attacks'][1]['stars'],
-                                "percent": member['attacks'][1]['destructionPercentage']})
-        except:
-            pass
-    return sorted(attack_data, key=lambda k: k['order'])
-
-
 client = ScrimBot()
 client.run(settings['discord']['scrimToken'])
-
