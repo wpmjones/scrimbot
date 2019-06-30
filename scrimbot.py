@@ -10,7 +10,7 @@ clan_2 = "89QYUYRY"  # Aardvark
 emoji_1 = ":airplane:"
 emoji_2 = emojis['other']['tank']
 
-coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="LIVE")
+coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
 
 class ScrimBot(discord.Client):
@@ -92,8 +92,7 @@ class ScrimBot(discord.Client):
                 minutes = (war.end_time.seconds_until % 3600) // 60
                 print(f"{hours:.0f}:{minutes:.0f} left in war")
                 try:
-                    # async for attack in war._attacks:
-                    for attack in war.attacks:
+                    for attack in war._attacks:
                         print("Processing war attacks...")
                         if attack.order > last_attack:
                             print(f"Processing attack #{attack.order}")
