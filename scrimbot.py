@@ -10,7 +10,7 @@ clan_2 = "89QYUYRY"  # Aardvark
 emoji_1 = ":airplane:"
 emoji_2 = emojis['other']['tank']
 
-coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="LIVE")
+coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
 
 class ScrimBot(discord.Client):
@@ -92,7 +92,6 @@ class ScrimBot(discord.Client):
                 minutes = (war.end_time.seconds_until % 3600) // 60
                 print(f"{hours:.0f}:{minutes:.0f} left in war")
                 try:
-                    # async for attack in war._attacks:
                     for attack in war._attacks:
                         print("Processing war attacks...")
                         if attack.order > last_attack:
@@ -105,16 +104,17 @@ class ScrimBot(discord.Client):
                             else:
                                 attacker_name = f"{emoji_2} {attacker_name}"
                                 defender_name = f"{emoji_1} {defender_name}"
-                            townhalls = f"({attack.attacker.town_hall}v{attack.defender.town_hall})"
+                            townhalls = f"({str(attack.attacker.town_hall)}v{str(attack.defender.town_hall)})"
                             line_1 = f"{attacker_name} just attacked {defender_name}"
                             stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
-                            line_2 = f"{stars} ({str(attack.destruction)}%)" # {townhalls}"
+                            line_2 = f"{stars} ({str(attack.destruction)}%) # {townhalls}"
                             if attack.defender.is_opponent:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             else:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             content = f"{line_1}\n{line_2}\n{line_3}\n------------"
                             await channel.send(content)
+                            logger.info(f"Attack #{attack.order} processed and posted.")
                             new_last_attack = attack.order
                             print(new_last_attack)
                 except:
@@ -141,12 +141,12 @@ class ScrimBot(discord.Client):
                     else:
                         clan_1_per = war.clan.destruction
                     clan_1_per = f"`{zws*(name_width-len(clan_1_per)-2)}{clan_1_per}%{zws}`"
-                    if war.opponent.destruction < 100:
+                    if war.opponent.desctrucion < 100:
                         width = 4
                         precision = 4
-                        clan_2_per = f"{war.opponent.destruction:{width}.{precision}}"
+                        clan_2_per = f"{war.opponent.desctrucion:{width}.{precision}}"
                     else:
-                        clan_2_per = war.opponent.destruction
+                        clan_2_per = war.opponent.desctrucion
                     clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
                     clan_1_attacks = f"{war.clan.attacks_used}/{war.clan.attack_count}"
                     clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
@@ -166,3 +166,4 @@ class ScrimBot(discord.Client):
 
 client = ScrimBot()
 client.run(settings['discord']['scrimToken'])
+
