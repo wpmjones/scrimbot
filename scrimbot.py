@@ -7,6 +7,7 @@ from config import settings, emojis
 
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
+clan_1 = "2CVLP0P0"
 emoji_1 = ":airplane:"
 emoji_2 = emojis['other']['tank']
 
@@ -94,6 +95,7 @@ class ScrimBot(discord.Client):
                 try:
                     for attack in war._attacks:
                         print("Processing war attacks...")
+                        print(f"{attack.order}. {attack.attacker.town_hall} vs {attack.defender.town_hall}")
                         if attack.order > last_attack:
                             print(f"Processing attack #{attack.order}")
                             attacker_name = f"{str(attack.attacker.map_position)}. {attack.attacker.name}"
@@ -107,7 +109,7 @@ class ScrimBot(discord.Client):
                             townhalls = f"({str(attack.attacker.town_hall)}v{str(attack.defender.town_hall)})"
                             line_1 = f"{attacker_name} just attacked {defender_name}"
                             stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
-                            line_2 = f"{stars} ({str(attack.destruction)}%) # {townhalls}"
+                            line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
                             if attack.defender.is_opponent:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             else:
@@ -120,8 +122,8 @@ class ScrimBot(discord.Client):
                 except:
                     logger.exception("attack loop")
                 # ------ FIX CLAN NAMES ------ #
-                clan_1_name = "Air"
-                clan_2_name = "Ground"
+                clan_1_name = war.clan.name
+                clan_2_name = war.opponent.name
                 if new_last_attack > last_attack:
                     if len(clan_1_name) > len(clan_2_name):
                         name_width = len(clan_1_name) + 3
