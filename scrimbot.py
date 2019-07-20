@@ -7,9 +7,9 @@ from config import settings, emojis
 
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
-clan_1 = "2CVLP0P0"
-emoji_1 = ":airplane:"
-emoji_2 = emojis['other']['tank']
+clan_1 = "PCJUCJGY"
+emoji_1 = ":rcs:"
+emoji_2 = emojis['other']['clashchamps']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
@@ -110,10 +110,10 @@ class ScrimBot(discord.Client):
                             line_1 = f"{attacker_name} just attacked {defender_name}"
                             stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
                             line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
-                            if attack.defender.is_opponent:
+                            if not attack.defender.is_opponent:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             else:
-                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                                line_3 = ""
                             content = f"{line_1}\n{line_2}\n{line_3}\n------------"
                             await channel.send(content)
                             logger.info(f"Attack #{attack.order} processed and posted.")
