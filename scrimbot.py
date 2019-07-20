@@ -76,15 +76,15 @@ class ScrimBot(discord.Client):
                         "It is OK.  Take a deep breath.  We didn't really need those stars anyway."]
 
         while not self.is_closed():
-            with open('scrim.txt', 'r') as f:
+            with open("scrim.txt", "r") as f:
                 last_attack = int(float(f.readline()))
             new_last_attack = last_attack
             war = await coc_client.get_current_war(f"#{clan_1}")
-            if war.state == 'preparation':
+            if war.state == "preparation":
                 hours = war.start_time.seconds_until // 3600
                 minutes = (war.start_time.seconds_until % 3600) // 60
-                content = f"{emoji_1} **Air vs Ground** {emoji_2}"
-                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the Air vs. Ground war begins.\n"
+                content = f"{emoji_1} **RCS vs. Clash Champs** {emoji_2}"
+                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the RCS vs. Clash Champs war begins.\n"
                             f"Come back and watch the progress!")
                 await channel.send(content)
                 await asyncio.sleep(war.start_time.seconds_until)
