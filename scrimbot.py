@@ -8,7 +8,7 @@ from config import settings, emojis
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
 clan_1 = "PCJUCJGY"
-emoji_1 = ":rcs:"
+emoji_1 = emojis['other']['rcs']
 emoji_2 = emojis['other']['clashchamps']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
