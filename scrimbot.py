@@ -161,9 +161,7 @@ class ScrimBot(discord.Client):
                     await channel.send(content)
                     try:
                         with open('scrim.txt', 'w') as f:
-                            # f.seek(0)
                             f.write(str(new_last_attack))
-                            # f.truncate()
                     except:
                         logger.exception("Failed to write file")
                 await asyncio.sleep(600)
