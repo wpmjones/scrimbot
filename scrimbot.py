@@ -150,9 +150,9 @@ class ScrimBot(discord.Client):
                     else:
                         clan_2_per = war.opponent.destruction
                     clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
-                    clan_1_attacks = f"{war.clan.attacks_used}/{war.clan.attack_count}"
+                    clan_1_attacks = f"{war.clan.attacks_used}/{war.team_size*2}"
                     clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
-                    clan_2_attacks = f"{war.opponent.attacks_used}/{war.opponent.attack_count}"
+                    clan_2_attacks = f"{war.opponent.attacks_used}/{war.team_size*2}"
                     clan_2_attacks = f"`\u200b {clan_2_attacks}{zws*(name_width-len(clan_2_attacks)-2)}`"
                     content = f"{clan_1_name}{emojis['other']['gap']}{emojis['other']['rcs']}{emojis['other']['gap']}{clan_2_name}"
                     content += f"\n{clan_1_stars}{emojis['other']['gap']}{emojis['stars']['new']}{emojis['other']['gap']}{clan_2_stars}"
