@@ -146,9 +146,9 @@ class ScrimBot(discord.Client):
                     if war.opponent.desctrucion < 100:
                         width = 4
                         precision = 4
-                        clan_2_per = f"{war.opponent.desctrucion:{width}.{precision}}"
+                        clan_2_per = f"{war.opponent.destruction:{width}.{precision}}"
                     else:
-                        clan_2_per = war.opponent.desctrucion
+                        clan_2_per = war.opponent.destruction
                     clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
                     clan_1_attacks = f"{war.clan.attacks_used}/{war.clan.attack_count}"
                     clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
