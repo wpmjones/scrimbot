@@ -93,7 +93,7 @@ class ScrimBot(discord.Client):
                 minutes = (war.end_time.seconds_until % 3600) // 60
                 print(f"{hours:.0f}:{minutes:.0f} left in war")
                 try:
-                    for attack in war._attacks:
+                    for attack in war.attacks:
                         print("Processing war attacks...")
                         print(f"{attack.order}. {attack.attacker.town_hall} vs {attack.defender.town_hall}")
                         if attack.order > last_attack:
