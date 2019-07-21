@@ -143,7 +143,7 @@ class ScrimBot(discord.Client):
                     else:
                         clan_1_per = war.clan.destruction
                     clan_1_per = f"`{zws*(name_width-len(clan_1_per)-2)}{clan_1_per}%{zws}`"
-                    if war.opponent.desctrucion < 100:
+                    if war.opponent.destruction < 100:
                         width = 4
                         precision = 4
                         clan_2_per = f"{war.opponent.destruction:{width}.{precision}}"
