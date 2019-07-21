@@ -110,7 +110,7 @@ class ScrimBot(discord.Client):
                             line_1 = f"{attacker_name} just attacked {defender_name}"
                             stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
                             line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
-                            if not attack.defender.is_opponent:
+                            if attack.defender.is_opponent:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             else:
                                 line_3 = ""
