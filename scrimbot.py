@@ -178,7 +178,8 @@ class ScrimBot(discord.Client):
                         f.write(str(new_last_attack))
                 except:
                     logger.exception("Failed to write file")
-        logger.debug(f"End of Loop\nFlag = {self.flag}")
+        if datetime.now().hour == 4 and 0 < datetime.now().minute < 12:
+            logger.debug(f"End of Loop | Flag = {self.flag}")
 
 
 client = ScrimBot()
