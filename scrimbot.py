@@ -5,6 +5,7 @@ import coc
 from loguru import logger
 from config import settings, emojis
 from discord.ext import tasks
+from datetime import datetime
 
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
@@ -19,15 +20,24 @@ class ScrimBot(discord.Client):
         super().__init__(*args, **kwargs)
         self.flag = 0
 
-        # create background task
-        self.bg_task = self.loop.create_task(self.my_background_task())
+        # start task
+        self.scrim_loop.start()
 
     async def on_ready(self):
         print(f"Logged in as {self.user.name}")
         print(self.user.id)
         print("------------")
+        logger.add(self.send_log, level="DEBUG")
+        logger.info("ScrimBot is now online")
 
-    async def my_background_task(self):
+    def send_log(self, message):
+        asyncio.ensure_future(self.send_message(message))
+
+    async def send_message(self, message):
+        await self.get_channel(settings['logChannels']['scrim']).send(f"`{message}`")
+
+    @tasks.loop(minutes=10)
+    async def scrim_loop(self):
         await self.wait_until_ready()
         channel = self.get_channel(594502407170424832)
 
@@ -78,98 +88,97 @@ class ScrimBot(discord.Client):
                         "Uhhhhh, I'm just going to look the other way."
                         "It is OK.  Take a deep breath.  We didn't really need those stars anyway."]
 
-        while not self.is_closed():
-            with open("scrim.txt", "r") as f:
-                last_attack = int(float(f.readline()))
-            new_last_attack = last_attack
-            war = await coc_client.get_current_war(f"#{clan_1}")
-            if war.state == "preparation" and self.flag == 0:
-                hours = war.start_time.seconds_until // 3600
-                minutes = (war.start_time.seconds_until % 3600) // 60
-                content = f"{emoji_1} **Members vs. Leaders** {emoji_2}"
-                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the MvL war begins.\n"
-                            f"Come back and see who the real boss is!")
+        with open("scrim.txt", "r") as f:
+            last_attack = int(float(f.readline()))
+        new_last_attack = last_attack
+        war = await coc_client.get_current_war(f"#{clan_1}")
+        if war.state == "preparation" and self.flag == 0:
+            hours = war.start_time.seconds_until // 3600
+            minutes = (war.start_time.seconds_until % 3600) // 60
+            content = f"{emoji_1} **Members vs. Leaders** {emoji_2}"
+            content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the MvL war begins.\n"
+                        f"Come back and see who the real boss is!")
+            await channel.send(content)
+            self.flag = 1
+            logger.info("Flag switched to 1. Prep message should not show again.")
+        if war.state in ['inWar', 'warEnded']:
+            hours = war.end_time.seconds_until // 3600
+            minutes = (war.end_time.seconds_until % 3600) // 60
+            print(f"{hours:.0f}:{minutes:.0f} left in war")
+            try:
+                for attack in war.attacks:
+                    print("Processing war attacks...")
+                    print(f"{attack.order}. {attack.attacker.town_hall} vs {attack.defender.town_hall}")
+                    if attack.order > last_attack:
+                        print(f"Processing attack #{attack.order}")
+                        attacker_name = f"{str(attack.attacker.map_position)}. {attack.attacker.name}"
+                        defender_name = f"{str(attack.defender.map_position)}. {attack.defender.name}"
+                        if attack.defender.is_opponent:
+                            attacker_name = f"{emoji_1} {attacker_name}"
+                            defender_name = f"{emoji_2} {defender_name}"
+                        else:
+                            attacker_name = f"{emoji_2} {attacker_name}"
+                            defender_name = f"{emoji_1} {defender_name}"
+                        townhalls = f"({str(attack.attacker.town_hall)}v{str(attack.defender.town_hall)})"
+                        line_1 = f"{attacker_name} just attacked {defender_name}"
+                        stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
+                        line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
+                        if attack.defender.is_opponent:
+                            line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                        else:
+                            # Should be "" if opponent is not RCS
+                            line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                        content = f"{line_1}\n{line_2}\n{line_3}\n------------"
+                        await channel.send(content)
+                        logger.info(f"Attack #{attack.order} processed and posted.")
+                        new_last_attack = attack.order
+                        print(new_last_attack)
+            except:
+                logger.exception("attack loop")
+            # ------ FIX CLAN NAMES ------ #
+            clan_1_name = "Members"  # war.clan.name
+            clan_2_name = "Leaders"  # war.opponent.name
+            if new_last_attack > last_attack:
+                if len(clan_1_name) > len(clan_2_name):
+                    name_width = len(clan_1_name) + 3
+                else:
+                    name_width = len(clan_2_name) + 3
+                zws = " \u200b"
+                clan_1_name = f"`{zws*(name_width-len(clan_1_name)-1)}{clan_1_name}{zws}`"
+                clan_2_name = f"`\u200b {clan_2_name}{zws*(name_width-len(clan_2_name)-2)}`"
+                clan_1_stars = f"{war.clan.stars}/{war.clan.max_stars}"
+                clan_1_stars = f"`{zws*(name_width-len(clan_1_stars)-1)}{clan_1_stars}{zws}`"
+                clan_2_stars = f"{war.opponent.stars}/{war.opponent.max_stars}"
+                clan_2_stars = f"`\u200b {clan_2_stars}{zws*(name_width-len(clan_2_stars)-2)}`"
+                if war.clan.destruction < 100:
+                    width = 5
+                    precision = 4
+                    clan_1_per = f"{war.clan.destruction:{width}.{precision}}"
+                else:
+                    clan_1_per = war.clan.destruction
+                clan_1_per = f"`{zws*(name_width-len(clan_1_per)-2)}{clan_1_per}%{zws}`"
+                if war.opponent.destruction < 100:
+                    width = 4
+                    precision = 4
+                    clan_2_per = f"{war.opponent.destruction:{width}.{precision}}"
+                else:
+                    clan_2_per = war.opponent.destruction
+                clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
+                clan_1_attacks = f"{war.clan.attacks_used}/{war.team_size*2}"
+                clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
+                clan_2_attacks = f"{war.opponent.attacks_used}/{war.team_size*2}"
+                clan_2_attacks = f"`\u200b {clan_2_attacks}{zws*(name_width-len(clan_2_attacks)-2)}`"
+                content = f"{clan_1_name}{emojis['other']['gap']}{emojis['other']['rcs']}{emojis['other']['gap']}{clan_2_name}"
+                content += f"\n{clan_1_stars}{emojis['other']['gap']}{emojis['stars']['new']}{emojis['other']['gap']}{clan_2_stars}"
+                content += f"\n{clan_1_per}{emojis['other']['gap']}{emojis['other']['per']}{emojis['other']['gap']}{clan_2_per}"
+                content += f"\n{clan_1_attacks}{emojis['other']['gap']}{emojis['other']['swords']}{emojis['other']['gap']}{clan_2_attacks}"
                 await channel.send(content)
-                self.flag = 1
-                logger.info("Flag switched to 1. Prep message should not show again.")
-            if war.state in ['inWar', 'warEnded']:
-                hours = war.end_time.seconds_until // 3600
-                minutes = (war.end_time.seconds_until % 3600) // 60
-                print(f"{hours:.0f}:{minutes:.0f} left in war")
                 try:
-                    for attack in war.attacks:
-                        print("Processing war attacks...")
-                        print(f"{attack.order}. {attack.attacker.town_hall} vs {attack.defender.town_hall}")
-                        if attack.order > last_attack:
-                            print(f"Processing attack #{attack.order}")
-                            attacker_name = f"{str(attack.attacker.map_position)}. {attack.attacker.name}"
-                            defender_name = f"{str(attack.defender.map_position)}. {attack.defender.name}"
-                            if attack.defender.is_opponent:
-                                attacker_name = f"{emoji_1} {attacker_name}"
-                                defender_name = f"{emoji_2} {defender_name}"
-                            else:
-                                attacker_name = f"{emoji_2} {attacker_name}"
-                                defender_name = f"{emoji_1} {defender_name}"
-                            townhalls = f"({str(attack.attacker.town_hall)}v{str(attack.defender.town_hall)})"
-                            line_1 = f"{attacker_name} just attacked {defender_name}"
-                            stars = f"{emojis['stars']['new']*attack.stars}{emojis['stars']['empty']*(3-attack.stars)}"
-                            line_2 = f"{stars} ({str(attack.destruction)}%) {townhalls}"
-                            if attack.defender.is_opponent:
-                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
-                            else:
-                                # Should be "" if opponent is not RCS
-                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
-                            content = f"{line_1}\n{line_2}\n{line_3}\n------------"
-                            await channel.send(content)
-                            logger.info(f"Attack #{attack.order} processed and posted.")
-                            new_last_attack = attack.order
-                            print(new_last_attack)
+                    with open('scrim.txt', 'w') as f:
+                        f.write(str(new_last_attack))
                 except:
-                    logger.exception("attack loop")
-                # ------ FIX CLAN NAMES ------ #
-                clan_1_name = "Members"  # war.clan.name
-                clan_2_name = "Leaders"  # war.opponent.name
-                if new_last_attack > last_attack:
-                    if len(clan_1_name) > len(clan_2_name):
-                        name_width = len(clan_1_name) + 3
-                    else:
-                        name_width = len(clan_2_name) + 3
-                    zws = " \u200b"
-                    clan_1_name = f"`{zws*(name_width-len(clan_1_name)-1)}{clan_1_name}{zws}`"
-                    clan_2_name = f"`\u200b {clan_2_name}{zws*(name_width-len(clan_2_name)-2)}`"
-                    clan_1_stars = f"{war.clan.stars}/{war.clan.max_stars}"
-                    clan_1_stars = f"`{zws*(name_width-len(clan_1_stars)-1)}{clan_1_stars}{zws}`"
-                    clan_2_stars = f"{war.opponent.stars}/{war.opponent.max_stars}"
-                    clan_2_stars = f"`\u200b {clan_2_stars}{zws*(name_width-len(clan_2_stars)-2)}`"
-                    if war.clan.destruction < 100:
-                        width = 5
-                        precision = 4
-                        clan_1_per = f"{war.clan.destruction:{width}.{precision}}"
-                    else:
-                        clan_1_per = war.clan.destruction
-                    clan_1_per = f"`{zws*(name_width-len(clan_1_per)-2)}{clan_1_per}%{zws}`"
-                    if war.opponent.destruction < 100:
-                        width = 4
-                        precision = 4
-                        clan_2_per = f"{war.opponent.destruction:{width}.{precision}}"
-                    else:
-                        clan_2_per = war.opponent.destruction
-                    clan_2_per = f"`\u200b {clan_2_per}%{zws*(name_width-len(clan_2_per)-3)}`"
-                    clan_1_attacks = f"{war.clan.attacks_used}/{war.team_size*2}"
-                    clan_1_attacks = f"`{zws*(name_width-len(clan_1_attacks)-1)}{clan_1_attacks}{zws}`"
-                    clan_2_attacks = f"{war.opponent.attacks_used}/{war.team_size*2}"
-                    clan_2_attacks = f"`\u200b {clan_2_attacks}{zws*(name_width-len(clan_2_attacks)-2)}`"
-                    content = f"{clan_1_name}{emojis['other']['gap']}{emojis['other']['rcs']}{emojis['other']['gap']}{clan_2_name}"
-                    content += f"\n{clan_1_stars}{emojis['other']['gap']}{emojis['stars']['new']}{emojis['other']['gap']}{clan_2_stars}"
-                    content += f"\n{clan_1_per}{emojis['other']['gap']}{emojis['other']['per']}{emojis['other']['gap']}{clan_2_per}"
-                    content += f"\n{clan_1_attacks}{emojis['other']['gap']}{emojis['other']['swords']}{emojis['other']['gap']}{clan_2_attacks}"
-                    await channel.send(content)
-                    try:
-                        with open('scrim.txt', 'w') as f:
-                            f.write(str(new_last_attack))
-                    except:
-                        logger.exception("Failed to write file")
-                await asyncio.sleep(600)
+                    logger.exception("Failed to write file")
+        logger.debug(f"End of Loop\nFlag = {self.flag}")
 
 
 client = ScrimBot()
