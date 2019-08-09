@@ -4,12 +4,12 @@ import random
 import coc
 from loguru import logger
 from config import settings, emojis
+from discord.ext import tasks
 
 clan_1 = "9LUR2PL9"  # Innuendo
 clan_2 = "89QYUYRY"  # Aardvark
-clan_1 = "PCJUCJGY"
-emoji_1 = emojis['other']['rcs']
-emoji_2 = emojis['other']['clashchamps']
+emoji_1 = emojis['other']['member']
+emoji_2 = emojis['other']['leader']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
@@ -17,6 +17,7 @@ coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pas
 class ScrimBot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.flag = 0
 
         # create background task
         self.bg_task = self.loop.create_task(self.my_background_task())
@@ -63,7 +64,8 @@ class ScrimBot(discord.Client):
                 #         "Well that really throws a spanner in the works. We're going to have to do better than that."]
                 return ["Perhaps another strategy next time.", 
                         "We are going to need some clean up on aisle 1.", 
-                        "May I recommend a good tutorial or perhaps a YouTube channel?", 
+                        "May I recommend a good tutorial or perhaps a YouTube channel?",
+                        "I'm doing a little quick math here and I'm not sure that's going to add to the win column."
                         "You are going to need more stars than that if you want to win this war!"]
             if stars == 0:
                 # return ["Kill the CC. Kill the heroes. Bob's your uncle. Wreck the base.  Better luck next time.", 
@@ -72,7 +74,8 @@ class ScrimBot(discord.Client):
                 #         "That just takes the biscuit!"]
                 return ["Do you even clash, bro?", 
                         "That was a scout, right?", 
-                        "Uh oh, I think we had a disco!", 
+                        "Uh oh, I think we had a disco!",
+                        "Uhhhhh, I'm just going to look the other way."
                         "It is OK.  Take a deep breath.  We didn't really need those stars anyway."]
 
         while not self.is_closed():
@@ -80,14 +83,15 @@ class ScrimBot(discord.Client):
                 last_attack = int(float(f.readline()))
             new_last_attack = last_attack
             war = await coc_client.get_current_war(f"#{clan_1}")
-            if war.state == "preparation":
+            if war.state == "preparation" and self.flag == 0:
                 hours = war.start_time.seconds_until // 3600
                 minutes = (war.start_time.seconds_until % 3600) // 60
-                content = f"{emoji_1} **RCS vs. Clash Champs** {emoji_2}"
-                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the RCS vs. Clash Champs war begins.\n"
-                            f"Come back and watch the progress!")
+                content = f"{emoji_1} **Members vs. Leaders** {emoji_2}"
+                content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the MvL war begins.\n"
+                            f"Come back and see who the real boss is!")
                 await channel.send(content)
-                await asyncio.sleep(war.start_time.seconds_until)
+                self.flag = 1
+                logger.info("Flag switched to 1. Prep message should not show again.")
             if war.state in ['inWar', 'warEnded']:
                 hours = war.end_time.seconds_until // 3600
                 minutes = (war.end_time.seconds_until % 3600) // 60
@@ -113,7 +117,8 @@ class ScrimBot(discord.Client):
                             if attack.defender.is_opponent:
                                 line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             else:
-                                line_3 = ""
+                                # Should be "" if opponent is not RCS
+                                line_3 = f"{random.choice(star_phrases(attack.stars))}"
                             content = f"{line_1}\n{line_2}\n{line_3}\n------------"
                             await channel.send(content)
                             logger.info(f"Attack #{attack.order} processed and posted.")
@@ -122,8 +127,8 @@ class ScrimBot(discord.Client):
                 except:
                     logger.exception("attack loop")
                 # ------ FIX CLAN NAMES ------ #
-                clan_1_name = war.clan.name
-                clan_2_name = war.opponent.name
+                clan_1_name = "Members"  # war.clan.name
+                clan_2_name = "Leaders"  # war.opponent.name
                 if new_last_attack > last_attack:
                     if len(clan_1_name) > len(clan_2_name):
                         name_width = len(clan_1_name) + 3
