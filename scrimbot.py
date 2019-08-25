@@ -176,7 +176,10 @@ class ScrimBot(discord.Client):
                 content += f"\n{clan_1_per}{emojis['other']['gap']}{emojis['other']['per']}{emojis['other']['gap']}{clan_2_per}"
                 content += f"\n{clan_1_attacks}{emojis['other']['gap']}{emojis['other']['swords']}{emojis['other']['gap']}{clan_2_attacks}"
                 await channel.send(content)
-                await channel.send(f"{war.end_time.seconds_until // 3600:.0f} hours left in war.")
+                if war.end_time.seconds_until > 3600:
+                    await channel.send(f"{war.end_time.seconds_until // 3600:.0f} hours left in war.")
+                else:
+                    await channel.send(f"{war.end_time.seconds_until // 60:.0f} minutes left in war.")
                 try:
                     with open('scrim.txt', 'w') as f:
                         f.write(str(new_last_attack))
