@@ -40,7 +40,7 @@ class ScrimBot(discord.Client):
     @tasks.loop(minutes=10)
     async def scrim_loop(self):
         await self.wait_until_ready()
-        channel = self.get_channel(594502407170424832)
+        channel = self.get_channel(611588064195903488)    # 594502407170424832)
 
         def star_phrases(stars):
             if stars == 3:
