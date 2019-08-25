@@ -30,6 +30,8 @@ class ScrimBot(discord.Client):
         print("------------")
         logger.add(self.send_log, level="DEBUG")
         logger.info("ScrimBot is now online")
+        activity = discord.Activity(type=discord.ActivityType.watching, name="the RCS beat UFC")
+        await self.change_presence(status=discord.Status.online, activity=activity)
 
     def send_log(self, message):
         asyncio.ensure_future(self.send_message(message))
@@ -182,12 +184,6 @@ class ScrimBot(discord.Client):
                     logger.exception("Failed to write file")
         if datetime.now().hour == 4 and 0 < datetime.now().minute < 12:
             logger.debug(f"End of Loop | Flag = {self.flag}")
-
-    @commands.command(name="clear")
-    @commands.is_owner()
-    async def clear(self, ctx):
-        async for message in ctx.channel.history():
-            await message.delete()
 
     @commands.command(name="presence", hidden=True)
     @commands.is_owner()
