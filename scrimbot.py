@@ -7,10 +7,11 @@ from config import settings, emojis
 from discord.ext import tasks
 from datetime import datetime
 
-clan_1 = "9LUR2PL9"  # Innuendo
+# clan_1 = "9LUR2PL9"  # Innuendo
+clan_1 = "PCJUCJGY"  # Team Reddit
 clan_2 = "89QYUYRY"  # Aardvark
-emoji_1 = emojis['other']['member']
-emoji_2 = emojis['other']['leader']
+emoji_1 = emojis['other']['rcs']
+emoji_2 = emojis['other']['ufc']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
@@ -127,7 +128,7 @@ class ScrimBot(discord.Client):
                             line_3 = f"{random.choice(star_phrases(attack.stars))}"
                         else:
                             # Should be "" if opponent is not RCS
-                            line_3 = f"{random.choice(star_phrases(attack.stars))}"
+                            line_3 = ""  # line_3 = f"{random.choice(star_phrases(attack.stars))}"
                         content = f"{line_1}\n{line_2}\n{line_3}\n------------"
                         await channel.send(content)
                         logger.info(f"Attack #{attack.order} processed and posted.")
@@ -136,8 +137,8 @@ class ScrimBot(discord.Client):
             except:
                 logger.exception("attack loop")
             # ------ FIX CLAN NAMES ------ #
-            clan_1_name = "Members"  # war.clan.name
-            clan_2_name = "Leaders"  # war.opponent.name
+            clan_1_name = "Team RCS"  # war.clan.name
+            clan_2_name = "UFC"  # war.opponent.name
             if new_last_attack > last_attack:
                 if len(clan_1_name) > len(clan_2_name):
                     name_width = len(clan_1_name) + 3
