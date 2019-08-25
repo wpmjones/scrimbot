@@ -4,7 +4,7 @@ import random
 import coc
 from loguru import logger
 from config import settings, emojis
-from discord.ext import tasks
+from discord.ext import tasks, commands
 from datetime import datetime
 
 # clan_1 = "9LUR2PL9"  # Innuendo
@@ -182,6 +182,23 @@ class ScrimBot(discord.Client):
                     logger.exception("Failed to write file")
         if datetime.now().hour == 4 and 0 < datetime.now().minute < 12:
             logger.debug(f"End of Loop | Flag = {self.flag}")
+
+    @commands.command(name="clear")
+    @commands.is_owner()
+    async def clear(self, ctx):
+        async for message in ctx.channel.history():
+            await message.delete()
+
+    @commands.command(name="presence", hidden=True)
+    @commands.is_owner()
+    async def presence(self, ctx, *, msg: str = "default"):
+        """Command to modify bot presence"""
+        if msg.lower() == "default":
+            activity = discord.Game("Clash of Clans")
+        else:
+            activity = discord.Activity(type=discord.ActivityType.watching, name=msg)
+        await self.bot.change_presence(status=discord.Status.online, activity=activity)
+        logger.info(f"{datetime.now()} - {ctx.author} changed the bot presence to {msg}")
 
 
 client = ScrimBot()
