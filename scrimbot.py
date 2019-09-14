@@ -99,8 +99,8 @@ class ScrimBot(discord.Client):
             hours = war.start_time.seconds_until // 3600
             minutes = (war.start_time.seconds_until % 3600) // 60
             content = f"{emoji_1} **RCS vs. Roar's** {emoji_2}"
-            content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the MvL war begins.\n"
-                        f"Come back and see who the real boss is!")
+            content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the war begins.\n"
+                        f"Come back and watch the RCS take away their roar!")
             await channel.send(content)
             self.flag = 1
             logger.info("Flag switched to 1. Prep message should not show again.")
