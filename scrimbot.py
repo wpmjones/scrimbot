@@ -8,10 +8,10 @@ from discord.ext import tasks, commands
 from datetime import datetime
 
 # clan_1 = "9LUR2PL9"  # Innuendo
-clan_1 = "PCJUCJGY"  # Team Reddit
-clan_2 = "89QYUYRY"  # Aardvark
+# clan_1 = "PCJUCJGY"  # Team Reddit
+clan_1 = "89QYUYRY"  # Aardvark
 emoji_1 = emojis['other']['rcs']
-emoji_2 = emojis['other']['ufc']
+emoji_2 = emojis['other']['roar']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
@@ -30,7 +30,7 @@ class ScrimBot(discord.Client):
         print("------------")
         logger.add(self.send_log, level="DEBUG")
         logger.info("ScrimBot is now online")
-        activity = discord.Activity(type=discord.ActivityType.watching, name="the RCS beat UFC")
+        activity = discord.Activity(type=discord.ActivityType.watching, name="the RCS beat Roar's War")
         await self.change_presence(status=discord.Status.online, activity=activity)
 
     def send_log(self, message):
@@ -98,7 +98,7 @@ class ScrimBot(discord.Client):
         if war.state == "preparation" and self.flag == 0:
             hours = war.start_time.seconds_until // 3600
             minutes = (war.start_time.seconds_until % 3600) // 60
-            content = f"{emoji_1} **Members vs. Leaders** {emoji_2}"
+            content = f"{emoji_1} **RCS vs. Roar's** {emoji_2}"
             content += (f"\n{hours:.0f} hours and {minutes:.0f} minutes until the MvL war begins.\n"
                         f"Come back and see who the real boss is!")
             await channel.send(content)
@@ -140,7 +140,7 @@ class ScrimBot(discord.Client):
                 logger.exception("attack loop")
             # ------ FIX CLAN NAMES ------ #
             clan_1_name = "Team RCS"  # war.clan.name
-            clan_2_name = "UFC"  # war.opponent.name
+            clan_2_name = "Roar's War"  # war.opponent.name
             if new_last_attack > last_attack:
                 if len(clan_1_name) > len(clan_2_name):
                     name_width = len(clan_1_name) + 3
