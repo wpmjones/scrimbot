@@ -191,7 +191,7 @@ class ScrimBot(discord.Client):
                     else:
                         await channel.send(f"{war.end_time.seconds_until // 60:.0f} minutes left in war.")
                     try:
-                        with open('scrim.txt', 'w') as f:
+                        with open(fname, 'w') as f:
                             f.write(str(new_last_attack))
                     except:
                         logger.exception("Failed to write file")
