@@ -31,7 +31,7 @@ class ScrimBot(discord.Client):
         print("------------")
         logger.add(self.send_log, level="DEBUG")
         logger.info("ScrimBot is now online")
-        activity = discord.Activity(type=discord.ActivityType.watching, name="The Draft Wars")
+        activity = discord.Activity(type=discord.ActivityType.watching, name="Pick Your Poison")
         await self.change_presence(status=discord.Status.online, activity=activity)
 
     def send_log(self, message):
