@@ -10,7 +10,7 @@ from datetime import datetime
 clan_1 = "9LUR2PL9"  # Innuendo
 # clan_1 = "PCJUCJGY"  # Team Reddit
 clan_2 = "89QYUYRY"  # Aardvark
-war_clans = [clan_1, clan_2]
+war_clans = [clan_1]
 emoji_1 = emojis['other']['rcs']
 emoji_2 = emojis['other']['rcs']
 
@@ -98,8 +98,8 @@ class ScrimBot(discord.Client):
             if war_clan == clan_1:
                 fname = "scrim1.txt"
                 channel = channel_1
-                clan_1_name = "Team Pike"
-                clan_2_name = "Team Luigi"
+                clan_1_name = "Innuendo"
+                clan_2_name = "Aardvark"
             else:
                 fname = "scrim2.txt"
                 channel = channel_2
@@ -197,17 +197,6 @@ class ScrimBot(discord.Client):
                         logger.exception("Failed to write file")
             if datetime.now().hour == 4 and 0 < datetime.now().minute < 12:
                 logger.debug(f"End of Loop | Flag = {self.flag}")
-
-    @commands.command(name="presence", hidden=True)
-    @commands.is_owner()
-    async def presence(self, ctx, *, msg: str = "default"):
-        """Command to modify bot presence"""
-        if msg.lower() == "default":
-            activity = discord.Game("Clash of Clans")
-        else:
-            activity = discord.Activity(type=discord.ActivityType.watching, name=msg)
-        await self.change_presence(status=discord.Status.online, activity=activity)
-        logger.info(f"{datetime.now()} - {ctx.author} changed the bot presence to {msg}")
 
 
 client = ScrimBot()
