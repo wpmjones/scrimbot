@@ -43,8 +43,8 @@ class ScrimBot(discord.Client):
     @tasks.loop(minutes=10)
     async def scrim_loop(self):
         await self.wait_until_ready()
-        channel_1 = self.get_channel(637680992555106304)
-        channel_2 = self.get_channel(637681714923044883)
+        channel_1 = self.get_channel(647916521309339698)
+        # channel_2 = self.get_channel(637681714923044883)
 
         def star_phrases(stars):
             if stars == 3:
@@ -100,6 +100,7 @@ class ScrimBot(discord.Client):
                 channel = channel_1
                 clan_1_name = "Innuendo"
                 clan_2_name = "Aardvark"
+                print(fname)
             else:
                 fname = "scrim2.txt"
                 channel = channel_2
