@@ -11,8 +11,8 @@ clan_1 = "9LUR2PL9"  # Innuendo
 # clan_1 = "PCJUCJGY"  # Team Reddit
 clan_2 = "89QYUYRY"  # Aardvark
 war_clans = [clan_1]
-emoji_1 = emojis['other']['rcs']
-emoji_2 = emojis['other']['rcs']
+emoji_1 = "♂"  # emojis['other']['rcs']
+emoji_2 = "♀"  # emojis['other']['rcs']
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
 
