@@ -4,17 +4,21 @@ import random
 import coc
 from loguru import logger
 from config import settings, emojis
-from discord.ext import tasks, commands
+from discord.ext import tasks
 from datetime import datetime
 
 clan_1 = "9LUR2PL9"  # Innuendo
 # clan_1 = "PCJUCJGY"  # Team Reddit
 clan_2 = "89QYUYRY"  # Aardvark
 war_clans = [clan_1]
-emoji_1 = "♂"  # emojis['other']['rcs']
-emoji_2 = "♀"  # emojis['other']['rcs']
+emoji_1 = "🟢"  # emojis['other']['rcs']
+emoji_2 = "🟠"  # emojis['other']['rcs']
+clan_name_1 = "The Green Coven"
+clan_name_2 = "The Orange Coven"
 
 coc_client = coc.login(settings['supercell']['user'], settings['supercell']['pass'], key_names="vps")
+
+intents = discord.Intents.default()
 
 
 class ScrimBot(discord.Client):
@@ -26,12 +30,9 @@ class ScrimBot(discord.Client):
         self.scrim_loop.start()
 
     async def on_ready(self):
-        print(f"Logged in as {self.user.name}")
-        print(self.user.id)
-        print("------------")
         logger.add(self.send_log, level="DEBUG")
         logger.info("ScrimBot is now online")
-        activity = discord.Activity(type=discord.ActivityType.watching, name="Pick Your Poison")
+        activity = discord.Activity(type=discord.ActivityType.watching, name="Witch Wars")
         await self.change_presence(status=discord.Status.online, activity=activity)
 
     def send_log(self, message):
@@ -43,7 +44,7 @@ class ScrimBot(discord.Client):
     @tasks.loop(minutes=10)
     async def scrim_loop(self):
         await self.wait_until_ready()
-        channel_1 = self.get_channel(679861739717787658)
+        channel_1 = self.get_channel(770408087613997076)
         # channel_2 = self.get_channel(637681714923044883)
 
         def star_phrases(stars):
@@ -98,8 +99,8 @@ class ScrimBot(discord.Client):
             if war_clan == clan_1:
                 fname = "scrim1.txt"
                 channel = channel_1
-                clan_1_name = "M'Lords"
-                clan_2_name = "M'Ladies"
+                clan_1_name = clan_name_1
+                clan_2_name = clan_name_2
                 print(fname)
             else:
                 fname = "scrim2.txt"
@@ -200,6 +201,6 @@ class ScrimBot(discord.Client):
                 logger.debug(f"End of Loop | Flag = {self.flag}")
 
 
-client = ScrimBot()
+client = ScrimBot(intents=intents)
 client.run(settings['discord']['scrimToken'])
 
