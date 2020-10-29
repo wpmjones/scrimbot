@@ -202,5 +202,5 @@ class ScrimBot(discord.Client):
 
 
 client = ScrimBot(intents=intents)
-client.run(settings['discord']['scrimToken'])
+client.run(settings['discord']['scrim_token'])
 
