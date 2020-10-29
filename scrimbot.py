@@ -39,7 +39,7 @@ class ScrimBot(discord.Client):
         asyncio.ensure_future(self.send_message(message))
 
     async def send_message(self, message):
-        await self.get_channel(settings['logChannels']['scrim']).send(f"`{message[:1995]}`")
+        await self.get_channel(settings['log_channels']['scrim']).send(f"`{message[:1995]}`")
 
     @tasks.loop(minutes=10)
     async def scrim_loop(self):
